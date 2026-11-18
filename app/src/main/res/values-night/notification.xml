@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="note_icon">@color/dark_txt</color>
+    <color name="note_danger">@color/dark_acc</color>
+</resources>

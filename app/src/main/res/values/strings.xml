@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Recording</string>
+    <string name="note_pause">Pause</string>
+    <string name="note_resume">Resume</string>
+    <string name="note_discard">Discard</string>
+    <string name="note_save">Save</string>
+    <string name="note_keep">Keep recording</string>
+    <string name="note_confirm">Discard this take</string>
+    <string name="note_title_recording">Recording</string>
+    <string name="note_title_paused">Paused</string>
+    <string name="note_title_confirm">Discard this take?</string>
+</resources>

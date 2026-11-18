@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same order as the app: discard, pause/resume, save. While confirming a discard the first
+     slot is discard-for-real (red) and the second is keep. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+    <ImageButton android:id="@+id/note_discard" style="@style/NoteButton" android:src="@drawable/ic_n_discard" android:contentDescription="@string/note_discard" />
+    <ImageButton android:id="@+id/note_confirm" style="@style/NoteButton" android:src="@drawable/ic_n_discard" android:tint="@color/note_danger" android:contentDescription="@string/note_confirm" android:visibility="gone" />
+    <ImageButton android:id="@+id/note_toggle" style="@style/NoteButton" android:src="@drawable/ic_n_pause" android:contentDescription="@string/note_pause" />
+    <ImageButton android:id="@+id/note_keep" style="@style/NoteButton" android:src="@drawable/ic_n_keep" android:contentDescription="@string/note_keep" android:visibility="gone" />
+    <ImageButton android:id="@+id/note_save" style="@style/NoteButton" android:src="@drawable/ic_n_save" android:contentDescription="@string/note_save" />
+</LinearLayout>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Collapsed: state and time, then the buttons in the app's order: discard, pause/resume, save.
+     Discard swaps them for discard-for-real / keep until the user decides. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:baselineAligned="false"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <TextView android:id="@+id/note_title" style="@style/NoteTitle" />
+        <Chronometer android:id="@+id/note_time" style="@style/NoteTime" />
+    </LinearLayout>
+
+    <include layout="@layout/notification_buttons" />
+</LinearLayout>

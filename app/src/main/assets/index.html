@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Recording</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" class="fill" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" class="fill" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" class="fill" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" class="fill" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1" class="fill" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="4" height="14" rx="1" class="fill" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="8.5" y="2" width="7" height="12.5" rx="3.5" class="fill" fill="currentColor" stroke="none"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.2M8.5 21.2h7"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 7V4h4v3M6 7l1 13h10l1-13"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></symbol>
+  <symbol id="i-louder" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+</svg>
+
+<!-- Home: record button, then the clips -->
+<section class="screen" id="s-home">
+  <header class="bar">
+    <h1>Recording</h1>
+    <button class="icon" data-go="settings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+  </header>
+  <div class="body">
+    <div class="rec-area">
+      <div class="rec-controls">
+        <button class="side-btn" id="rec-discard" aria-label="Discard recording"><svg><use href="#i-close"/></svg></button>
+        <div class="rec-wrap">
+          <div class="halo" id="halo" aria-hidden="true"></div>
+          <button class="rec-btn" id="rec" aria-label="Start recording"><svg class="rec-icon"><use id="rec-icon" href="#i-mic"/></svg></button>
+        </div>
+        <button class="side-btn save" id="rec-save" aria-label="Save recording"><svg><use href="#i-check"/></svg></button>
+      </div>
+      <div class="rec-time" id="rec-time">0:00</div>
+      <div class="rec-state" id="rec-state">Tap to record</div>
+      <button class="chip" id="mic-chip" aria-label="Choose microphone"><svg><use href="#i-mic"/></svg><span id="mic-chip-text">Main mic</span></button>
+      <p class="notice" id="rec-msg" role="status" hidden></p>
+    </div>
+    <ul class="clips" id="clips"></ul>
+    <p class="empty muted" id="empty" hidden>No recordings yet. Tap the button to start.</p>
+  </div>
+</section>
+
+
+<!-- Settings -->
+<section class="screen" id="s-settings">
+  <header class="bar">
+    <button class="icon" data-back aria-label="Back"><svg><use href="#i-back"/></svg></button>
+    <h1>Settings</h1>
+  </header>
+  <div class="body">
+    <h2>Format</h2>
+    <div class="seg" data-setting="format">
+      <button data-value="m4a">M4A</button>
+      <button data-value="wav">WAV</button>
+      <button data-value="opus">Opus</button>
+    </div>
+    <p class="muted small" id="format-note"></p>
+
+    <div id="quality-row">
+      <h2>Quality</h2>
+      <div class="seg" data-setting="quality">
+        <button data-value="standard">Standard</button>
+        <button data-value="high">High</button>
+      </div>
+      <p class="muted small" id="quality-note"></p>
+    </div>
+
+    <h2>Channels</h2>
+    <div class="seg" data-setting="channels">
+      <button data-value="1">Mono</button>
+      <button data-value="2">Stereo</button>
+    </div>
+    <p class="muted small">Stereo needs a phone or mic with two capsules, and doubles the size.</p>
+
+    <h2>Sound</h2>
+    <div class="seg" data-setting="processing">
+      <button data-value="music">Natural</button>
+      <button data-value="voice">Voice</button>
+    </div>
+    <p class="muted small" id="processing-note"></p>
+
+    <h2>Theme</h2>
+    <div class="seg" data-setting="theme">
+      <button data-value="system">System</button>
+      <button data-value="light">Light</button>
+      <button data-value="dark">Dark</button>
+    </div>
+
+    <h2>Saved to</h2>
+    <p class="muted small" id="folder-note"></p>
+  </div>
+</section>
+
+<div class="snack" id="snack" role="status" hidden></div>
+
+<script src="js/store.js"></script>
+<script src="js/format.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script src="js/recorder.js"></script>
+<script src="js/clips.js"></script>
+<script src="js/mic.js"></script>
+<script src="js/settings.js"></script>
+<script>R.app.start();</script>
+</body>
+</html>
