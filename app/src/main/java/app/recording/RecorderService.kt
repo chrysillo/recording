@@ -158,6 +158,7 @@ class RecorderService : Service() {
             main.post { fail("Couldn't create the file: ${e.message}") }; return
         }
         var active: Takes.Active? = null
+        var encoder: Encoder? = null
         val rec = try {
             active = takes.begin(name, c, clip)
             val enc = Encoder.create(c.format, clip.pfd, RecordConfig.RATE, c.channels, c.bitRate)
@@ -167,9 +168,12 @@ class RecorderService : Service() {
                         ParcelFileDescriptor.MODE_CREATE or ParcelFileDescriptor.MODE_TRUNCATE), RecordConfig.RATE, c.channels, capped = false)
                 } catch (e: Exception) { enc.abort(); throw e }
             }
-            Recorder(Mics.source(am, c.processing), Mics.device(am, c.mic), c.channels,
-                if (backup != null) TeeEncoder(enc, backup) else enc, Events(store, clip, takes, active)).also { it.start() }
+            encoder = if (backup != null) TeeEncoder(enc, backup) else enc
+            Recorder(Mics.source(am, c.processing), Mics.device(am, c.mic), c.channels, encoder,
+                Events(store, clip, takes, active)).also { it.start() }
         } catch (e: Exception) {
+            // The mic didn't start: release the codec and close the files before deleting them.
+            try { encoder?.abort() } catch (_: Exception) { /* deleting it anyway */ }
             store.discard(clip)
             active?.let { takes.end(it) }
             main.post { fail(e.message ?: "The microphone couldn't be opened") }
