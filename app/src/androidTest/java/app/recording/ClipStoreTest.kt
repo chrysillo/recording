@@ -25,7 +25,7 @@ class ClipStoreTest {
     private val tag = "Test" + System.currentTimeMillis()
 
     @After fun cleanUp() {
-        store.list().filter { it.name.startsWith(tag) }.forEach { store.delete(it) }
+        store.list().filter { it.name.startsWith(tag) }.let { store.delete(it) }
     }
 
     private fun clip(base: String) = store.list().firstOrNull { ClipNames.base(it.name) == base }

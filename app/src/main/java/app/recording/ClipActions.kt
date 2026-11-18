@@ -21,8 +21,8 @@ class ClipActions(context: Context, private val store: ClipStore, private val ho
         fun js(code: String)
         /** Shows the system's consent dialog; called on the main thread. */
         fun askConsent(sender: IntentSender, retry: (() -> ClipStore.Result)?)
-        /** Opens the share sheet; called on the main thread. */
-        fun send(uri: Uri, mime: String, name: String)
+        /** Opens the share sheet for one or more files of [mime]; called on the main thread. */
+        fun send(uris: List<Uri>, mime: String, names: List<String>)
     }
 
     private val context = context.applicationContext
@@ -32,6 +32,9 @@ class ClipActions(context: Context, private val store: ClipStore, private val ho
     @Volatile private var clips = emptyMap<Long, Clip>()
 
     fun clip(id: String): Clip? = id.toLongOrNull()?.let { clips[it] }
+
+    /** The listed clips among [ids]; anything else is dropped. */
+    fun clips(ids: List<String>): List<Clip> = ids.distinct().mapNotNull { clip(it) }
 
     fun toast(message: String) = host.js("window.onToast && onToast(${JSONObject.quote(message)})")
 
@@ -49,7 +52,8 @@ class ClipActions(context: Context, private val store: ClipStore, private val ho
 
     fun rename(c: Clip, name: String) = guarded("Couldn't rename the clip") { handle(store.rename(c, name)) }
 
-    fun delete(c: Clip) = guarded("Couldn't delete the clip") { handle(store.delete(c)) }
+    fun delete(list: List<Clip>) =
+        guarded(if (list.size == 1) "Couldn't delete the clip" else "Couldn't delete the clips") { handle(store.delete(list)) }
 
     /** The user agreed in the consent dialog: do what it was asked for. */
     fun retry(retry: () -> ClipStore.Result) = guarded("Couldn't change the clip") { handle(retry()) }
@@ -66,7 +70,7 @@ class ClipActions(context: Context, private val store: ClipStore, private val ho
 
     /** The original file, or (Android 10+) a small Opus voice note made from it. */
     fun share(c: Clip, voiceNote: Boolean) {
-        if (!voiceNote || Build.VERSION.SDK_INT < 29) { main.post { host.send(c.uri, c.mime, c.name) }; return }
+        if (!voiceNote || Build.VERSION.SDK_INT < 29) { shareFiles(listOf(c)); return }
         host.js("window.onShare && onShare('preparing')")
         Work.clips.execute {
             try {
@@ -76,11 +80,18 @@ class ClipActions(context: Context, private val store: ClipStore, private val ho
                 val out = File(dir, ClipNames.base(c.name) + ".ogg")
                 Transcoder.toVoiceNote(context, c.uri, out)
                 host.js("window.onShare && onShare('ready')")
-                main.post { host.send(ShareProvider.uriFor(out), "audio/ogg", out.name) }
+                main.post { host.send(listOf(ShareProvider.uriFor(out)), "audio/ogg", listOf(out.name)) }
             } catch (e: Exception) {
                 host.js("window.onShare && onShare('error')")
             }
         }
+    }
+
+    /** The original files, together. */
+    fun shareFiles(list: List<Clip>) {
+        if (list.isEmpty()) return
+        val mime = list.map { it.mime }.distinct().singleOrNull() ?: "audio/*"
+        main.post { host.send(list.map { it.uri }, mime, list.map { it.name }) }
     }
 
     /** Acts on a rename or delete result. Runs on [Work.clips]. */

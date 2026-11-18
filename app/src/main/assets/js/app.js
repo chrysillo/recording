@@ -6,6 +6,7 @@
   const { $ } = R.ui;
   const screens = {};
   let stack = ['home'];
+  const backSteps = [];   // modes that Back leaves before changing screen, such as selecting clips
 
   function show() {
     document.querySelectorAll('.screen').forEach((s) => s.classList.remove('on'));
@@ -53,6 +54,8 @@
 
   R.app = {
     register(name, s) { screens[name] = s; },
+    // fn() returns true if it handled Back (it was in its mode and has left it).
+    onBack(fn) { backSteps.push(fn); },
     go(name) {
       if (stack[stack.length - 1] === name) return;
       leaveCurrent();
@@ -62,6 +65,7 @@
     // Called by MainActivity on Back; true means the page handled it, false lets the app close.
     back() {
       if (R.ui.closeTop()) return true;
+      if (backSteps.some((fn) => fn())) return true;
       if (stack.length > 1) {
         leaveCurrent();
         stack.pop();

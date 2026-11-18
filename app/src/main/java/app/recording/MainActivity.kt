@@ -17,6 +17,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
@@ -44,6 +45,9 @@ class MainActivity : Activity(), RecorderService.Listener, ClipActions.Host {
         private const val REQ_CONSENT = 2
         // Longest name or settings string the bridge accepts from the page.
         private const val MAX_ARG = 2000
+        // Most clip ids one call can name (a selection), and the longest list of them read.
+        private const val MAX_IDS = 1000
+        private const val MAX_IDS_ARG = 40_000
     }
 
     private lateinit var root: FrameLayout
@@ -249,11 +253,15 @@ class MainActivity : Activity(), RecorderService.Listener, ClipActions.Host {
         if (resultCode == RESULT_OK && retry != null) actions.retry(retry) else actions.list()
     }
 
-    override fun send(uri: Uri, mime: String, name: String) {
-        if (isDestroyed) return
-        val i = Intent(Intent.ACTION_SEND).setType(mime).putExtra(Intent.EXTRA_STREAM, uri)
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        i.clipData = ClipData.newRawUri(name, uri)
+    override fun send(uris: List<Uri>, mime: String, names: List<String>) {
+        if (isDestroyed || uris.isEmpty()) return
+        val i = if (uris.size == 1) Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, uris[0])
+            else Intent(Intent.ACTION_SEND_MULTIPLE).putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+        i.setType(mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        // The grant covers the URIs in clipData, so every file goes in it.
+        val clip = ClipData.newRawUri(names[0], uris[0])
+        for (k in 1 until uris.size) clip.addItem(ClipData.Item(uris[k]))
+        i.clipData = clip
         try { startActivity(Intent.createChooser(i, null)) } catch (e: ActivityNotFoundException) { actions.toast("No app to share with") }
     }
 
@@ -288,6 +296,13 @@ class MainActivity : Activity(), RecorderService.Listener, ClipActions.Host {
         // Work.clips carries on: a job still running reports to a page that's gone, which js() ignores.
         web.destroy()
         super.onDestroy()
+    }
+
+    private fun idList(json: String): List<String> = try {
+        val a = JSONArray(json.take(MAX_IDS_ARG))
+        (0 until minOf(a.length(), MAX_IDS)).map { a.optString(it) }
+    } catch (e: JSONException) {
+        emptyList()
     }
 
     /** Called by page JS on the bridge thread. Every argument is untrusted: ids must be listed clips. */
@@ -336,6 +351,10 @@ class MainActivity : Activity(), RecorderService.Listener, ClipActions.Host {
         @JavascriptInterface
         fun pause() = runOnUiThread { player.pause() }
 
+        /** Closes the player: playback stops and the page hides it. */
+        @JavascriptInterface
+        fun stopPlayback() = runOnUiThread { player.stop() }
+
         @JavascriptInterface
         fun seek(ms: Double) {
             if (!ms.isFinite()) return
@@ -348,12 +367,22 @@ class MainActivity : Activity(), RecorderService.Listener, ClipActions.Host {
             actions.rename(c, name.take(MAX_ARG))
         }
 
+        /** [ids] is a JSON array of clip ids: one clip, or a selection. */
         @JavascriptInterface
-        fun delete(id: String) {
-            val c = actions.clip(id) ?: return
+        fun delete(ids: String) {
+            val list = actions.clips(idList(ids))
+            if (list.isEmpty()) return
             runOnUiThread { player.stop() }
-            actions.delete(c)
+            actions.delete(list)
         }
+
+        /** Shares the original files of the clips in [ids] (a JSON array), together. */
+        @JavascriptInterface
+        fun shareMany(ids: String) = actions.shareFiles(actions.clips(idList(ids)))
+
+        /** The tick a long press gives elsewhere on the phone. */
+        @JavascriptInterface
+        fun haptic() = runOnUiThread { if (!isDestroyed) web.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS) }
 
         @JavascriptInterface
         fun louder(id: String) {

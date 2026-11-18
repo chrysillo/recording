@@ -7,6 +7,7 @@ body {
   font: 16px/1.4 system-ui, -apple-system, Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  -webkit-touch-callout: none;   /* a held clip selects it, not text or a link menu */
   overflow: hidden;
 }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
@@ -75,23 +76,52 @@ h2 { margin: 24px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: .06e
 .notice { margin: 12px 0 0; text-align: center; font-size: 14px; color: var(--acc); }
 
 /* Clip list */
-.clips { list-style: none; margin: 0; padding: 0; }
-.clip { border-bottom: 1px solid var(--line); }
+/* Rows run edge to edge (out of .body's side padding), so a selected row's colour fills the width */
+.clips { list-style: none; margin: 0 -16px; padding: 0; }
+.clip { border-bottom: 1px solid var(--line); padding: 0 16px; }
 .clip.fresh { animation: fresh 1.5s ease-out; }
 @keyframes fresh { from { background: color-mix(in srgb, var(--acc) 15%, transparent); } }
 .clip-row { display: flex; align-items: center; }
-.clip-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 0; text-align: left; }
+.clip-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 6px 0; min-height: 52px; text-align: left; }
 .clip-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.clip-meta { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
-.clip-dur { font-size: 15px; }
-.clip-size { font-size: 12px; color: var(--muted); }
+.clip-dur { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .more { margin-right: -10px; color: var(--muted); }
-.player { display: flex; align-items: center; gap: 8px; padding: 0 0 12px; }
-.play-btn { background: var(--acc); color: var(--ink); width: 40px; height: 40px; }
-.play-btn svg { width: 20px; height: 20px; }
-.seek { flex: 1; accent-color: var(--acc); }
-.player-time { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.clip.current .clip-name { color: var(--acc); font-weight: 600; }
+
+/* The player docked under the list; the list scrolls above it */
+.dock { flex: none; padding: 4px 16px 10px; background: var(--surf); border-top: 1px solid var(--line); }
+.dock[hidden] { display: none; }
+.dock-top { display: flex; align-items: center; gap: 8px; }
+.dock-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.dock-top .icon { margin-right: -10px; color: var(--muted); }
+.seek { display: block; width: 100%; margin: 2px 0 6px; accent-color: var(--acc); }
+.dock-controls { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.dock-time { flex: 1; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dock-time.end { text-align: right; }
+.play-btn { background: var(--acc); color: var(--ink); width: 52px; height: 52px; }
+.play-btn:active { background: var(--acc); filter: brightness(.9); }
+.play-btn svg { width: 24px; height: 24px; }
+.has-player .snack { bottom: 150px; }
+.has-player .body { padding-bottom: 0; }   /* the snack sits above the player, so the list needn't leave room for it */
 .empty { text-align: center; padding: 32px 0; }
+
+/* Selecting clips: a bar with the count and actions docks at the bottom in the player's place
+   (playback carries on); each row gets a tick */
+.select-bar { display: none; flex: none; background: var(--surf); border-top: 1px solid var(--line); }
+.selecting .select-bar { display: flex; }
+.selecting .dock { display: none; }
+.selecting .body { padding-bottom: 0; }
+.selecting .snack { bottom: 72px; }
+.select-bar h1 { font-size: 18px; font-variant-numeric: tabular-nums; }
+.select-bar .danger { color: var(--acc); }
+.tick {
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--muted); flex: none;
+  display: flex; align-items: center; justify-content: center; color: var(--ink);
+}
+.tick svg { width: 16px; height: 16px; stroke-width: 3; visibility: hidden; }
+.clip.selected { background: color-mix(in srgb, var(--acc) 10%, transparent); }
+.clip.selected .tick { background: var(--acc); border-color: var(--acc); }
+.clip.selected .tick svg { visibility: visible; }
 
 /* Segmented controls */
 .seg { display: flex; background: var(--surf); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
@@ -103,6 +133,8 @@ h2 { margin: 24px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: .06e
 .scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .4); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
 .sheet { width: 100%; max-width: 560px; background: var(--surf); border-radius: 16px 16px 0 0; padding: 8px 0 16px; }
 .sheet-title { margin: 8px 20px 4px; font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet-title:has(+ .sheet-details) { margin-bottom: 0; color: var(--txt); font-size: 16px; font-weight: 600; }
+.sheet-details { margin: 2px 20px 8px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .sheet-item { width: 100%; display: flex; align-items: center; gap: 16px; padding: 14px 20px; text-align: left; }
 .sheet-item:active { background: var(--line); }
 .sheet-item.danger { color: var(--acc); }

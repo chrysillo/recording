@@ -40,9 +40,11 @@
 
   // A bottom sheet of actions: items are { label, hint, icon, danger, on, run }. An item with
   // `on` is the current choice and gets a check; the others keep the space so labels line up.
-  function sheet(title, items, footer) {
+  // `details` is a line under the title (a clip's length, size and format); `footer` a tip below.
+  function sheet(title, items, footer, details) {
     const box = el('div', 'sheet');
     if (title) box.appendChild(el('p', 'sheet-title', title));
+    if (details) box.appendChild(el('p', 'sheet-details', details));
     items.forEach((it) => {
       const b = el('button', 'sheet-item' + (it.danger ? ' danger' : '') + (it.on ? ' on' : ''));
       if (it.icon) b.appendChild(icon(it.icon));
@@ -122,5 +124,40 @@
   }
   function hideSnack() { clearTimeout(snackTimer); $('snack').hidden = true; }
 
-  R.ui = { $, el, icon, overlay, sheet, prompt, confirm, snack, hideSnack, closeTop };
+  // Press and hold: onHold() runs after HOLD_MS without the finger moving (a scroll cancels it).
+  // The tap that ends a hold is swallowed, so it doesn't also act as a click on what's now there.
+  const HOLD_MS = 500;
+  const SLOP_PX = 10;
+  let swallow = false;
+  // A new touch is a new tap: the hold's release may never have made a click to swallow.
+  document.addEventListener('pointerdown', () => { swallow = false; }, true);
+  document.addEventListener('click', (e) => {
+    if (!swallow) return;
+    swallow = false;
+    e.stopPropagation();
+    e.preventDefault();
+  }, true);
+
+  function onHold(node, run) {
+    let timer = null;
+    let x = 0;
+    let y = 0;
+    const cancel = () => { clearTimeout(timer); timer = null; };
+    node.addEventListener('pointerdown', (e) => {
+      x = e.clientX;
+      y = e.clientY;
+      cancel();
+      timer = setTimeout(() => {
+        timer = null;
+        swallow = true;
+        run();
+      }, HOLD_MS);
+    });
+    node.addEventListener('pointermove', (e) => { if (Math.hypot(e.clientX - x, e.clientY - y) > SLOP_PX) cancel(); });
+    node.addEventListener('pointerup', cancel);
+    node.addEventListener('pointercancel', cancel);
+    node.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  R.ui = { $, el, icon, overlay, sheet, prompt, confirm, snack, hideSnack, closeTop, onHold };
 })(window.R);

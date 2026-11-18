@@ -190,25 +190,46 @@ class ClipStore(private val context: Context) {
         }
     }
 
-    fun delete(clip: Clip): Result = guarded(clip, null) {
-        resolver.delete(clip.uri, null, null)
-        if (Build.VERSION.SDK_INT < 29) File(legacyDir(), clip.name).delete()
+    /**
+     * Deletes [clips]. Clips from an earlier install need the user's consent: Android 11+ asks once
+     * for all of them, and its request deletes them by itself; Android 10 asks one clip at a time,
+     * and each yes carries on with the rest.
+     */
+    fun delete(clips: List<Clip>): Result {
+        val refused = ArrayList<Clip>()
+        var ask: RecoverableSecurityException? = null
+        for (clip in clips) {
+            try {
+                resolver.delete(clip.uri, null, null)
+                if (Build.VERSION.SDK_INT < 29) File(legacyDir(), clip.name).delete()
+            } catch (e: SecurityException) {
+                if (Build.VERSION.SDK_INT < 29) throw e
+                refused += clip
+                if (ask == null && e is RecoverableSecurityException) ask = e
+            }
+        }
+        val first = ask
+        return when {
+            refused.isEmpty() -> Result.Done
+            Build.VERSION.SDK_INT >= 30 ->
+                Result.NeedsConsent(MediaStore.createDeleteRequest(resolver, refused.map { it.uri }).intentSender, null)
+            first != null -> Result.NeedsConsent(first.userAction.actionIntent.intentSender) { delete(refused) }
+            else -> throw SecurityException("Couldn't delete ${refused.size} recordings")
+        }
     }
 
     /**
      * Runs [action]; when it's refused because the clip belongs to an earlier install, returns the
-     * system's consent request instead. On Android 11+ the delete request deletes by itself.
+     * system's consent request instead, with [retry] to run if the user agrees.
      */
-    private fun guarded(clip: Clip, retry: (() -> Result)?, action: () -> Unit): Result = try {
+    private fun guarded(clip: Clip, retry: () -> Result, action: () -> Unit): Result = try {
         action(); Result.Done
     } catch (e: SecurityException) {
         when {
-            Build.VERSION.SDK_INT >= 30 && retry == null ->
-                Result.NeedsConsent(MediaStore.createDeleteRequest(resolver, listOf(clip.uri)).intentSender, null)
             Build.VERSION.SDK_INT >= 30 ->
                 Result.NeedsConsent(MediaStore.createWriteRequest(resolver, listOf(clip.uri)).intentSender, retry)
             Build.VERSION.SDK_INT == 29 && e is RecoverableSecurityException ->
-                Result.NeedsConsent(e.userAction.actionIntent.intentSender, retry ?: { delete(clip) })
+                Result.NeedsConsent(e.userAction.actionIntent.intentSender, retry)
             else -> throw e
         }
     }

@@ -24,12 +24,14 @@
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></symbol>
   <symbol id="i-louder" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M19 5l-10 7 10 7z" class="fill" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M5 5l10 7-10 7z" class="fill" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
 </svg>
 
 <!-- Home: record button, then the clips -->
 <section class="screen" id="s-home">
-  <header class="bar">
+  <header class="bar main-bar">
     <h1>Recording</h1>
     <button class="icon" data-go="settings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
   </header>
@@ -50,6 +52,29 @@
     </div>
     <ul class="clips" id="clips"></ul>
     <p class="empty muted" id="empty" hidden>No recordings yet. Tap the button to start.</p>
+  </div>
+  <!-- The one player: the clip tapped last plays here (player.js) -->
+  <div class="dock" id="player" hidden>
+    <div class="dock-top">
+      <span class="dock-name" id="player-name"></span>
+      <button class="icon" id="player-close" aria-label="Close player"><svg><use href="#i-close"/></svg></button>
+    </div>
+    <input type="range" class="seek" id="player-seek" min="0" step="100" aria-label="Position">
+    <div class="dock-controls">
+      <span class="dock-time" id="player-pos">0:00</span>
+      <button class="icon" id="player-prev" aria-label="Previous"><svg><use href="#i-prev"/></svg></button>
+      <button class="icon play-btn" id="player-toggle" aria-label="Play"><svg><use id="player-icon" href="#i-play"/></svg></button>
+      <button class="icon" id="player-next" aria-label="Next"><svg><use href="#i-next"/></svg></button>
+      <span class="dock-time end" id="player-dur">0:00</span>
+    </div>
+  </div>
+  <!-- Docked at the bottom in the player's place while clips are selected (hold a clip to start) -->
+  <div class="bar select-bar">
+    <button class="icon" id="select-close" aria-label="Stop selecting"><svg><use href="#i-close"/></svg></button>
+    <h1 id="select-count" aria-live="polite"></h1>
+    <button class="text-btn" id="select-all"></button>
+    <button class="icon" id="select-share" aria-label="Share selected"><svg><use href="#i-share"/></svg></button>
+    <button class="icon danger" id="select-delete" aria-label="Delete selected"><svg><use href="#i-trash"/></svg></button>
   </div>
 </section>
 
@@ -112,6 +137,7 @@
 <script src="js/app.js"></script>
 <script src="js/recorder.js"></script>
 <script src="js/clips.js"></script>
+<script src="js/player.js"></script>
 <script src="js/mic.js"></script>
 <script src="js/settings.js"></script>
 <script>R.app.start();</script>
